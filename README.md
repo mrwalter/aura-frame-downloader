@@ -175,6 +175,63 @@ To prevent the log from growing unboundedly, create `/etc/logrotate.d/aura-downl
 
 ---
 
+## Image Server
+
+`image_server.py` serves a randomly rotating image from a local directory over HTTP. Each image is held for a configurable number of seconds before rotating to the next, making it suitable as a media source for Home Assistant's [Generic Camera](https://www.home-assistant.io/integrations/generic/) integration.
+
+### Usage
+
+```bash
+# Serve images from the ./images directory on the default port (8124)
+./venv/bin/python image_server.py images
+
+# Use a custom port
+./venv/bin/python image_server.py images --port 9000
+```
+
+Access the rotating image at:
+
+```
+http://<host>:8124/rotate?n=<seconds>
+```
+
+The `n` parameter controls how long each image is shown before rotating to the next. All requests within the same `n`-second window return the same image. Defaults to 15 seconds if omitted.
+
+### Run automatically on Ubuntu (systemd)
+
+Create `/etc/systemd/system/aura-image-server.service`:
+
+```ini
+[Unit]
+Description=Aura Image Server
+After=network.target
+
+[Service]
+User=<your-username>
+WorkingDirectory=/home/<your-username>/aura-frame-downloader
+ExecStart=/home/<your-username>/aura-frame-downloader/venv/bin/python image_server.py images
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then enable and start it:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable aura-image-server
+sudo systemctl start aura-image-server
+```
+
+The server will start automatically on reboot. Check its status with:
+
+```bash
+sudo systemctl status aura-image-server
+```
+
+---
+
 ## Development
 
 ### macOS/Linux
