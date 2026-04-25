@@ -123,6 +123,58 @@ python download-aura-photos.py --config /path/to/config.ini myframe
 
 ---
 
+## Scheduled Runs (Ubuntu/Linux)
+
+### Setup
+
+1. Set up the venv on your machine (see [Development](#development) below)
+
+2. Edit `scripts/run_download.sh` and set:
+   - `FRAME` — your frame name from `credentials.ini`
+   - `LOG_FILE` — where to write the log (default: `~/aura-downloads.log`)
+
+3. Make the script executable:
+   ```bash
+   chmod +x scripts/run_download.sh
+   ```
+
+4. Add a cron entry to run it nightly (`crontab -e`):
+   ```cron
+   0 2 * * * /absolute/path/to/aura-frame-downloader/scripts/run_download.sh
+   ```
+
+### Log format
+
+Each run appends a block to the log file:
+
+```
+=== 2025-10-15T02:00:01+00:00  frame=myframe ===
+02:00:01 [INFO]: Using credentials file '/home/user/etc/aura/credentials.ini'
+02:00:03 [INFO]: Login successful
+02:00:04 [INFO]: Found 247 photos
+02:00:04 [INFO]: Starting download process
+02:00:05 [INFO]: 1: Skipping 2024-01-15-09-32-14.000_A1B2...jpeg, already downloaded
+...
+02:01:09 [INFO]: Downloaded 3 photos (244 skipped)
+=== done (exit 0) ===
+```
+
+### Log rotation (optional)
+
+To prevent the log from growing unboundedly, create `/etc/logrotate.d/aura-downloads`:
+
+```
+/home/youruser/aura-downloads.log {
+    weekly
+    rotate 8
+    compress
+    missingok
+    notifempty
+}
+```
+
+---
+
 ## Development
 
 ### macOS/Linux

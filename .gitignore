@@ -5,6 +5,7 @@ images-*
 
 # Credentials and private config files
 credentials.ini
+config.ini
 *.credentials
 secrets.ini
 .env.local
