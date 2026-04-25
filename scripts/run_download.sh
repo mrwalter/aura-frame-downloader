@@ -3,6 +3,7 @@ set -euo pipefail
 
 # ── Configure these ──────────────────────────────────────
 FRAME="myframe"                    # frame name from credentials.ini
+CONFIG="${SCRIPT_DIR}/../config.ini"       # path to credentials.ini
 LOG_FILE="${HOME}/aura-downloads.log"
 # ─────────────────────────────────────────────────────────
 
@@ -12,6 +13,6 @@ DOWNLOADER="${SCRIPT_DIR}/../download-aura-photos.py"
 
 {
   echo "=== $(date --iso-8601=seconds)  frame=${FRAME} ==="
-  "${PYTHON}" "${DOWNLOADER}" "${FRAME}"
+  "${PYTHON}" "${DOWNLOADER}" --config "${CONFIG}" "${FRAME}"
   echo "=== done (exit $?) ==="
 } >> "${LOG_FILE}" 2>&1
