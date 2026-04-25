@@ -6,8 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ── Configure these ──────────────────────────────────────
 FRAME="myframe"                            # frame name from credentials.ini
 CONFIG="${SCRIPT_DIR}/../config.ini"       # path to credentials.ini
-LOG_FILE="${HOME}/aura-downloads.log"
+LOG_FILE="${SCRIPT_DIR}/../logs/aura-downloads.log"
 # ─────────────────────────────────────────────────────────
+mkdir -p "${SCRIPT_DIR}/../logs"
 PYTHON="${SCRIPT_DIR}/../venv/bin/python"
 DOWNLOADER="${SCRIPT_DIR}/../download-aura-photos.py"
 

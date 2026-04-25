@@ -164,7 +164,7 @@ Each run appends a block to the log file:
 To prevent the log from growing unboundedly, create `/etc/logrotate.d/aura-downloads`:
 
 ```
-/home/youruser/aura-downloads.log {
+/home/youruser/aura-frame-downloader/logs/aura-downloads.log {
     weekly
     rotate 8
     compress

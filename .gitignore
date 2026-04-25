@@ -3,6 +3,9 @@
 # Custom image directories
 images-*
 
+# Logs
+logs/
+
 # Credentials and private config files
 credentials.ini
 config.ini
