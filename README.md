@@ -153,8 +153,7 @@ Each run appends a block to the log file:
 02:00:03 [INFO]: Login successful
 02:00:04 [INFO]: Found 247 photos
 02:00:04 [INFO]: Starting download process
-02:00:05 [INFO]: 1: Skipping 2024-01-15-09-32-14.000_A1B2...jpeg, already downloaded
-...
+02:00:08 [INFO]: 245: Downloading 2025-10-14-18-22-01.000_F9C3...jpeg
 02:01:09 [INFO]: Downloaded 3 photos (244 skipped)
 === done (exit 0) ===
 ```

@@ -16,7 +16,7 @@ RENAMER="${SCRIPT_DIR}/rename_url_to_mp4.sh"
 
 {
   echo "=== $(date --iso-8601=seconds)  frame=${FRAME} ==="
-  "${PYTHON}" "${DOWNLOADER}" --config "${CONFIG}" "${FRAME}"
+  "${PYTHON}" "${DOWNLOADER}" --config "${CONFIG}" "${FRAME}" 2>&1 | grep -v ", already downloaded$"
   "${RENAMER}" "${IMAGES_DIR}"
   echo "=== done (exit $?) ==="
 } >> "${LOG_FILE}" 2>&1
