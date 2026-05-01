@@ -176,25 +176,34 @@ To prevent the log from growing unboundedly, create `/etc/logrotate.d/aura-downl
 
 ## Image Server
 
-`image_server.py` serves a randomly rotating image from a local directory over HTTP. Each image is held for a configurable number of seconds before rotating to the next, making it suitable as a media source for Home Assistant's [Generic Camera](https://www.home-assistant.io/integrations/generic/) integration.
+`image_server.py` serves rotating images and videos from a local directory over HTTP. Each item is held for a configurable number of seconds before rotating to the next.
 
 ### Usage
 
 ```bash
-# Serve images from the ./images directory on the default port (8124)
+# Serve media from the ./images directory on the default port (8124)
 ./venv/bin/python image_server.py images
 
 # Use a custom port
 ./venv/bin/python image_server.py images --port 9000
 ```
 
-Access the rotating image at:
+### Endpoints
 
-```
-http://<host>:8124/rotate?n=<seconds>
-```
+| Endpoint | Description |
+|----------|-------------|
+| `/rotate?n=<seconds>` | Returns a single rotating image (no videos). Suitable for HA's [Generic Camera](https://www.home-assistant.io/integrations/generic/) integration. |
+| `/page?n=<seconds>[&audio=1]` | Returns a self-contained HTML page that rotates through both images and videos client-side. Use with [Wallpanel](https://j-a-n.github.io/lovelace-wallpanel/)'s `iframe+` prefix. |
 
-The `n` parameter controls how long each image is shown before rotating to the next. All requests within the same `n`-second window return the same image. Defaults to 15 seconds if omitted.
+The `n` parameter controls how long each item is shown. All requests within the same `n`-second window get the same item. Defaults to 15 seconds.
+
+**Audio** (`/page` only): Videos are muted by default. Pass `audio=1` to enable sound. Note that browsers may block autoplay-with-sound until you interact with the page.
+
+**Wallpanel example:**
+
+```yaml
+image_url: iframe+http://192.168.5.50:8124/page?n=30
+```
 
 ### Run automatically on Ubuntu (systemd)
 
