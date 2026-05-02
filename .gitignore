@@ -168,3 +168,5 @@ Desktop.ini
 # Downloaded photos (in case someone downloads to project dir)
 photos/
 downloads/
+images/*
+!images/downloaded-images-go-here.txt

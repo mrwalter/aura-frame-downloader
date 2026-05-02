@@ -154,16 +154,23 @@ def download_photos_from_aura(
             raise DownloadCancelledError("Download cancelled by user")
 
         try:
-            # Construct the raw photo URL
-            url = IMAGE_URL_TEMPLATE.format(
-                user_id=item['user_id'],
-                file_name=item['file_name']
-            )
+            # Videos have a signed video_url pointing to the real MP4;
+            # photos use the imgproxy URL built from file_name.
+            video_url = item.get('video_url')
+            if video_url:
+                url = video_url
+                extension = '.mp4'
+            else:
+                url = IMAGE_URL_TEMPLATE.format(
+                    user_id=item['user_id'],
+                    file_name=item['file_name']
+                )
+                extension = os.path.splitext(item['file_name'])[1]
 
             # Make a unique filename using timestamp + id + extension
             # Clean the timestamp to be Windows-friendly
             clean_time = item['taken_at'].replace(':', '-')
-            new_filename = clean_time + "_" + item['id'] + os.path.splitext(item['file_name'])[1]
+            new_filename = clean_time + "_" + item['id'] + extension
 
             if organize_by_year:
                 # Download picture to file_path/year/picture
