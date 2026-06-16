@@ -23,6 +23,10 @@ LOGIN_URL = "https://api.pushd.com/v5/login.json"
 FRAME_URL_TEMPLATE = "https://api.pushd.com/v5/frames/{frame_id}/assets.json?side_load_users=false"
 IMAGE_URL_TEMPLATE = "https://imgproxy.pushd.com/{user_id}/{file_name}"
 
+# Live Photos are saved as their still image; the motion clip goes in this
+# subdirectory of the download folder.
+LIVE_PHOTO_VIDEO_DIRNAME = "live_photo_videos"
+
 
 def create_session(email: str, password: str) -> requests.Session:
     """
@@ -154,58 +158,67 @@ def download_photos_from_aura(
             raise DownloadCancelledError("Download cancelled by user")
 
         try:
-            # Videos have a signed video_url pointing to the real MP4;
-            # photos use the imgproxy URL built from file_name.
+            # Make a unique filename base using timestamp + id.
+            # Clean the timestamp to be Windows-friendly.
+            clean_time = item['taken_at'].replace(':', '-')
+            base_name = clean_time + "_" + item['id']
+
+            is_live = bool(item.get('is_live'))
             video_url = item.get('video_url')
-            if video_url:
-                url = video_url
-                extension = '.mp4'
+
+            # Where the primary file lands (optionally bucketed by year).
+            if organize_by_year:
+                dest_dir = os.path.join(file_path, clean_time[:4])
             else:
-                url = IMAGE_URL_TEMPLATE.format(
+                dest_dir = file_path
+
+            # Pick the primary file for this asset:
+            #   - real videos: the signed MP4
+            #   - live photos: the still image (the motion clip is saved separately below)
+            #   - plain photos: the still image
+            if video_url and not is_live:
+                primary_url = video_url
+                primary_name = base_name + '.mp4'
+            else:
+                primary_url = IMAGE_URL_TEMPLATE.format(
                     user_id=item['user_id'],
                     file_name=item['file_name']
                 )
-                extension = os.path.splitext(item['file_name'])[1]
+                primary_name = base_name + os.path.splitext(item['file_name'])[1]
 
-            # Make a unique filename using timestamp + id + extension
-            # Clean the timestamp to be Windows-friendly
-            clean_time = item['taken_at'].replace(':', '-')
-            new_filename = clean_time + "_" + item['id'] + extension
-
-            if organize_by_year:
-                # Download picture to file_path/year/picture
-                year_dir = os.path.join(file_path, clean_time[:4])
-                if not os.path.isdir(year_dir):
-                    LOGGER.debug("Creating new year directory: %s", year_dir)
-                    os.makedirs(year_dir)
-                file_to_write = os.path.join(year_dir, new_filename)
-            else:
-                # Default to download picture to file_path/picture
-                file_to_write = os.path.join(file_path, new_filename)
+            # (url, destination) jobs for this asset; a live photo has two.
+            jobs = [(primary_url, os.path.join(dest_dir, primary_name))]
+            if is_live and video_url:
+                live_dir = os.path.join(file_path, LIVE_PHOTO_VIDEO_DIRNAME)
+                jobs.append((video_url, os.path.join(live_dir, base_name + '.mp4')))
 
             # Update progress
             if progress_callback:
-                progress_callback(current, total_count, new_filename)
+                progress_callback(current, total_count, primary_name)
 
-            # Check if file exists and skip it if so
-            if os.path.isfile(file_to_write):
-                LOGGER.info("%i: Skipping %s, already downloaded", current, new_filename)
-                skipped_count += 1
-                continue
+            for url, file_to_write in jobs:
+                os.makedirs(os.path.dirname(file_to_write), exist_ok=True)
+                display_name = os.path.basename(file_to_write)
 
-            # Get the photo from the url
-            LOGGER.info("%i: Downloading %s", current, new_filename)
-            response = requests.get(url, stream=True, timeout=90)
+                # Check if file exists and skip it if so
+                if os.path.isfile(file_to_write):
+                    LOGGER.info("%i: Skipping %s, already downloaded", current, display_name)
+                    skipped_count += 1
+                    continue
 
-            # Write to a file
-            with open(file_to_write, 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            del response
+                # Get the file from the url
+                LOGGER.info("%i: Downloading %s", current, display_name)
+                response = requests.get(url, stream=True, timeout=90)
 
-            downloaded_count += 1
+                # Write to a file
+                with open(file_to_write, 'wb') as out_file:
+                    shutil.copyfileobj(response.raw, out_file)
+                del response
 
-            # Wait a bit to avoid throttling
-            time.sleep(2)
+                downloaded_count += 1
+
+                # Wait a bit to avoid throttling
+                time.sleep(2)
 
         except DownloadCancelledError:
             raise
